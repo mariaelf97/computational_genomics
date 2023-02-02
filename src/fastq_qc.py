@@ -1,16 +1,17 @@
-#
+#!/usr/bin/env python3
 import sys
 
+import argparse
 import pandas as pd
 import seaborn as sns
 from Bio import SeqIO
 
 
-def calculate_score():
+def calculate_score(input):
     """function to get quality score for each base in all reads"""
     qual_list = []
     base_list = []
-    for record in SeqIO.parse("/Users/maryam/Downloads/assignment1.fastq", "fastq"):
+    for record in SeqIO.parse(input, "fastq"):
         qual_score = record.letter_annotations["phred_quality"]
         qual_base = record.seq
         qual_list.append(qual_score)
@@ -29,9 +30,14 @@ def create_graphs(df, density=True):
 
 
 def main():
-
+    parser = argparse.ArgumentParser(
+        description="""fastq QC"""
+    )
+    parser.add_argument("-i", "--input", required=True, help="input file in fastq format")
+    args = parser.parse_args()
+    input_file = args.input
     df_list = []
-    qual_scores, qual_bases = calculate_score()[0], calculate_score()[1]
+    qual_scores, qual_bases = calculate_score(input_file)[0], calculate_score(input_file)[1]
     for i in range(0, len(qual_scores)):
         for j in range(1, len(qual_scores[1])):
             df_list.append(
@@ -44,7 +50,7 @@ def main():
             )
     qual_df = pd.DataFrame(df_list)
     # get summary stats
-    print(qual_df["quality_score"].describe())
+    print("summary statistics of read qualities:\n",qual_df["quality_score"].describe())
     # get density plot per base
     create_graphs(qual_df, density=True)
     # get box plot of quality scores

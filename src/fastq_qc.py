@@ -21,6 +21,7 @@ def calculate_score(input_file_path):
 
 
 def create_graphs(df, density=True):
+    """function to plot quality scores"""
     if density:
         sns.kdeplot(df, x="quality_score", hue="base").set(
             title="Quality distribution per base"

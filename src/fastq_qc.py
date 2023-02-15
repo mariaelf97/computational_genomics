@@ -5,13 +5,14 @@ import sys
 import pandas as pd
 import seaborn as sns
 from Bio import SeqIO
+from matplotlib import pyplot as plt
 
 
-def calculate_score(input):
+def calculate_score(input_file_path):
     """function to get quality score for each base in all reads"""
     qual_list = []
     base_list = []
-    for record in SeqIO.parse(input, "fastq"):
+    for record in SeqIO.parse(input_file_path, "fastq"):
         qual_score = record.letter_annotations["phred_quality"]
         qual_base = record.seq
         qual_list.append(qual_score)
@@ -20,13 +21,16 @@ def calculate_score(input):
 
 
 def create_graphs(df, density=True):
+    """function to plot quality scores"""
     if density:
         sns.kdeplot(df, x="quality_score", hue="base").set(
             title="Quality distribution per base"
         )
+        plt.savefig("quality_distribution_per_base.png")
     else:
-        sns.set(font_scale=0.6)
-        sns.boxplot(x="position_in_read", y="quality_score")
+        sns.boxplot(df, x="position_in_read", y="quality_score")
+        plt.tick_params(axis="both", which="major", labelsize=5)
+        plt.savefig("quality_boxplot.png")
 
 
 def main():

@@ -1,0 +1,45 @@
+ISOLATES = [i for i in open("/home/exouser/midterm1/isolate_list.txt").read().split('\n') if len(i) >0]
+
+PREFIX = "midterm1"
+
+rule all:
+    input:
+        expand("{isolate}/{isolate}.vcf", isolate=ISOLATES)
+
+rule alignment:
+    input:
+        input1="/home/exouser/midterm1/{isolate}/{isolate}_1.fastq",
+        input2="/home/exouser/midterm1/sequence.fasta"
+    output:
+        "{isolate}/{isolate}.sam"
+    shell:
+        """bwa-mem2 mem -p {input.input2} {input.input1} -o {output}"""
+
+rule change_to_bam:
+    input:"{isolate}/{isolate}.sam"
+    output:"{isolate}/{isolate}.bam"
+    shell:
+        """samtools view -S -b {input} > {output}"""
+rule sort:
+    input:"{isolate}/{isolate}.bam"
+    output:"{isolate}/{isolate}.sorted.bam"
+    shell:
+        """samtools sort {input} -o {output}"""
+rule index:
+    input:"{isolate}/{isolate}.sorted.bam"
+    output:"{isolate}/{isolate}.sorted.bam.bai"
+    shell:
+        """samtools index {input}"""
+rule variant_calling:
+    input:
+        input1="{isolate}/{isolate}.sorted.bam",
+        input2="/home/exouser/midterm1/sequence.fasta",
+        input3="/home/exouser/midterm1/samples.ploidy",
+    output:"{isolate}/{isolate}.bcf"
+    shell:
+        """bcftools mpileup -f {input.input2} {input.input1} | bcftools call -mv -Ov --ploidy-file {input.input3} -o {output}"""
+rule change_bcf_to_vcf:
+    input:"{isolate}/{isolate}.bcf"
+    output:"{isolate}/{isolate}.vcf"
+    shell:
+        """bcftools view {input} > {output}"""

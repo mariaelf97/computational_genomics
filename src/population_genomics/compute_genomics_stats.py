@@ -22,22 +22,15 @@ def read_vcf(path):
             "QUAL": str,
             "FILTER": str,
             "INFO": str,
+            "FORMAT" : str,
         },
         sep="\t",
     ).rename(columns={"#CHROM": "CHROM"})
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description=""" program to print all gene names longer than
-     2000 nucleotides in a multi-fasta file"""
-    )
-    parser.add_argument(
-        "-i", "--input", required=True, help="input file in multi fasta format"
-    )
-    args = parser.parse_args()
-    input_file = args.input
-    print(input_file)
+
+    input = read_vcf("/Users/maryam/Downloads/chr16.vcf")
 
 
 if __name__ == "__main__":

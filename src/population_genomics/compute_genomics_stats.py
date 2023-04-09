@@ -6,31 +6,30 @@ import sys
 import pandas as pd
 
 
-def read_vcf(path):
-    """code credit to :
-    https://gist.github.com/dceoy/99d976a2c01e7f0ba1c813778f9db744"""
-    with open(path, "r") as f:
-        lines = [values for values in f if not values.startswith("##")]
-    return pd.read_csv(
-        io.StringIO("".join(lines)),
-        dtype={
-            "#CHROM": str,
-            "POS": int,
-            "ID": str,
-            "REF": str,
-            "ALT": str,
-            "QUAL": str,
-            "FILTER": str,
-            "INFO": str,
-            "FORMAT" : str,
-        },
-        sep="\t",
-    ).rename(columns={"#CHROM": "CHROM"})
-
-
 def main():
+    parser = argparse.ArgumentParser(
+        description=""" program to get get heterozygosity and allele frequency using vcftools out.het and out.freq"""
+    )
+    parser.add_argument(
+        "-i1", "--input1", required=True, help="vcftools out.het output"
+    )
+    parser.add_argument(
+        "-i2", "--input2", required=True, help="vcftools out.freq output"
+    )
 
-    input = read_vcf("/Users/maryam/Downloads/chr16.vcf")
+    args = parser.parse_args()
+    out_het = args.input1
+    out_freq = args.input2
+    vcf_input = pd.read_csv(out_het, sep='\t')
+    vcf_input['heterozygosity'] = (vcf_input['N_SITES'] - vcf_input['O(HOM)']) / vcf_input['N_SITES']
+    heterozygosity_per_ind = vcf_input[['INDV','heterozygosity']]
+    heterozygosity_per_ind.to_csv("heterozygosity.tsv", sep ="\t")
+    allele_freq_input = pd.read_csv(out_freq, sep='\t')
+    allele_freq_output = allele_freq_input[['CHROM','{FREQ}']]
+    allele_freq_output["allele_2_freq"] = 1- allele_freq_output['{FREQ}']
+    allele_freq_output.rename(columns={'CHROM': 'locus', '{FREQ}': 'allele_1_freq',
+                                       "allele_2_freq": "allele_2_freq"}, inplace=True)
+    allele_freq_output.to_csv("allele_frequency.tsv", sep="\t")
 
 
 if __name__ == "__main__":
